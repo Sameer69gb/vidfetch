@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VidFetch</title>
+  <link rel="icon" type="image/png" href="fevi.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      font-family: 'Inter', sans-serif;
+      padding: 40px 16px 60px;
+      color: #e0e0e0;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #4a90e2, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .supported {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: #161616;
+      border: 1px solid #2a2a2a;
+      border-radius: 20px;
+      padding: 3px 11px;
+      font-size: 0.72rem;
+      color: #666;
+    }
+
+    .card {
+      max-width: 620px;
+      margin: 0 auto;
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      color: #e0e0e0;
+      background: #1e1e1e;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus { border-color: #4a90e2; }
+    input[type="text"]::placeholder { color: #444; }
+
+    .btn-fetch {
+      padding: 12px 22px;
+      background: linear-gradient(135deg, #4a90e2, #a855f7);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .btn-fetch:hover { opacity: 0.88; }
+    .btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .loader {
+      display: none;
+      text-align: center;
+      padding: 18px 0;
+      color: #555;
+      font-size: 0.85rem;
+    }
+
+    .spinner {
+      width: 24px; height: 24px;
+      border: 2.5px solid #2a2a2a;
+      border-top-color: #4a90e2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .video-info { display: none; }
+
+    .video-meta {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #222;
+    }
+
+    .thumbnail {
+      width: 128px;
+      height: 76px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+
+    .meta-text { flex: 1; min-width: 0; }
+
+    .video-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .meta-item { font-size: 0.78rem; color: #555; }
+    .meta-item span { color: #aaa; font-weight: 500; }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .formats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .format-btn {
+      padding: 9px 12px;
+      background: #1e1e1e;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .format-btn:hover {
+      border-color: #4a90e2;
+      background: #1a2233;
+    }
+
+    .format-btn.selected {
+      border-color: #a855f7;
+      background: #1e1a2e;
+    }
+
+    .format-label { font-size: 0.84rem; font-weight: 500; color: #ccc; }
+    .format-size { font-size: 0.71rem; color: #444; margin-top: 2px; }
+
+    .btn-download {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-download:hover { opacity: 0.88; }
+    .btn-download:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .status {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      display: none;
+    }
+
+    .status.error { background: #1f1212; color: #f87171; border: 1px solid #3a1f1f; }
+    .status.success { background: #111f16; color: #4ade80; border: 1px solid #1a3322; }
+    .status.info { background: #111a2a; color: #60a5fa; border: 1px solid #1a2a40; }
+
+    .note {
+      text-align: center;
+      font-size: 0.73rem;
+      color: #333;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">VidFetch</div>
+  <p>Download videos & audio from anywhere</p>
+  <div class="supported">
+    <span class="chip">YouTube</span>
+    <span class="chip">Twitter/X</span>
+    <span class="chip">TikTok</span>
+    <span class="chip">Reddit</span>
+    <span class="chip">1000+ sites</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="input-row">
+    <input type="text" id="urlInput" placeholder="Paste video URL here..." />
+    <button class="btn-fetch" id="fetchBtn" onclick="fetchInfo()">Fetch</button>
+  </div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    Fetching video info...
+  </div>
+
+  <div class="video-info" id="videoInfo">
+    <div class="video-meta">
+      <img class="thumbnail" id="thumbnail" src="" alt="thumbnail" />
+      <div class="meta-text">
+        <div class="video-title" id="videoTitle"></div>
+        <div class="meta-row">
+          <div class="meta-item">By <span id="uploader"></span></div>
+          <div class="meta-item">Duration <span id="duration"></span></div>
+          <div class="meta-item">Views <span id="views"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Select Format</div>
+    <div class="formats-grid" id="formatsGrid"></div>
+
+    <button class="btn-download" id="downloadBtn" onclick="startDownload()" disabled>
+      ⬇ Download
+    </button>
+  </div>
+
+  <div class="status" id="status"></div>
+</div>
+
+<p class="note">For personal use only. Respect copyright laws and platform terms of service.</p>
+
+<script>
+  const API_BASE = 'https://vidfetch-z2wx.onrender.com/api';
+  let selectedFormat = null;
+  let currentUrl = '';
+
+  function formatDuration(s) {
+    if (!s) return 'N/A';
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  function formatViews(n) {
+    if (!n) return 'N/A';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n;
+  }
+
+  function formatSize(bytes) {
+    if (!bytes) return '';
+    if (bytes >= 1e9) return (bytes / 1e9).toFixed(1) + ' GB';
+    if (bytes >= 1e6) return (bytes / 1e6).toFixed(0) + ' MB';
+    return (bytes / 1e3).toFixed(0) + ' KB';
+  }
+
+  function showStatus(msg, type) {
+    const s = document.getElementById('status');
+    s.textContent = msg;
+    s.className = `status ${type}`;
+    s.style.display = 'block';
+  }
+
+  function hideStatus() {
+    document.getElementById('status').style.display = 'none';
+  }
+
+  async function fetchInfo() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) return showStatus('Please enter a URL!', 'error');
+    currentUrl = url;
+    selectedFormat = null;
+    document.getElementById('fetchBtn').disabled = true;
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('videoInfo').style.display = 'none';
+    document.getElementById('downloadBtn').disabled = true;
+    hideStatus();
+    try {
+      const res = await fetch(`${API_BASE}/info`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      document.getElementById('thumbnail').src = data.thumbnail;
+      document.getElementById('videoTitle').textContent = data.title;
+      document.getElementById('uploader').textContent = data.uploader;
+      document.getElementById('duration').textContent = formatDuration(data.duration);
+      document.getElementById('views').textContent = formatViews(data.view_count);
+      const grid = document.getElementById('formatsGrid');
+      grid.innerHTML = '';
+      data.formats.forEach(f => {
+        const btn = document.createElement('button');
+        btn.className = 'format-btn';
+        btn.innerHTML = `<div class="format-label">${f.label}</div><div class="format-size">${formatSize(f.filesize)}</div>`;
+        btn.onclick = () => selectFormat(f.format_id, btn);
+        grid.appendChild(btn);
+      });
+      document.getElementById('videoInfo').style.display = 'block';
+    } catch (err) {
+      showStatus('Error: ' + err.message, 'error');
+    } finally {
+      document.getElementById('fetchBtn').disabled = false;
+      document.getElementById('loader').style.display = 'none';
+    }
+  }
+
+  function selectFormat(formatId, btn) {
+    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedFormat = formatId;
+    document.getElementById('downloadBtn').disabled = false;
+    hideStatus();
+  }
+
+  async function startDownload() {
+    if (!selectedFormat) return;
+    const btn = document.getElementById('downloadBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Downloading...';
+    showStatus('Download started! This may take a moment...', 'info');
+    try {
+      const res = await fetch(`${API_BASE}/download`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: currentUrl, format_id: selectedFormat })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      const filename = match ? match[1] : 'video.mp4';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showStatus('✓ Download complete!', 'success');
+    } catch (err) {
+      showStatus('Error: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '⬇ Download';
+    }
+  }
+
+  document.getElementById('urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') fetchInfo();
+  });
+</script>
+</body>
+</html>
