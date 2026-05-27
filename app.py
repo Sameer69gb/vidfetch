@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify, send_file, after_this_request
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import yt_dlp
 import os
 import tempfile
 import threading
 import time
+
+COOKIES_PATH = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
 app = Flask(__name__)
 CORS(app)
@@ -33,7 +35,7 @@ def get_info():
         'quiet': True,
         'no_warnings': True,
         'skip_download': True,
-        'cookiefile': 'cookies.txt',
+        'cookiefile': COOKIES_PATH,
         'extractor_args': {'facebook': {'api': ['next']}},
     }
 
@@ -102,6 +104,7 @@ def download():
             'format': 'bestaudio/best',
             'outtmpl': output_path,
             'quiet': True,
+            'cookiefile': COOKIES_PATH,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -113,6 +116,7 @@ def download():
             'format': f'{format_id}+bestaudio/{format_id}/best',
             'outtmpl': output_path,
             'quiet': True,
+            'cookiefile': COOKIES_PATH,
             'merge_output_format': 'mp4',
         }
 
