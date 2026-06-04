@@ -24,74 +24,70 @@ def cleanup_file(filepath, delay=60):
 
 @app.route('/api/info', methods=['POST'])
 def get_info():
-    """Get video info without downloading"""
-    data = request.json
-    url = data.get('url', '').strip()
-
-    if not url:
-        return jsonify({'error': 'URL required'}), 400
-
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'cookiefile': COOKIES_PATH,
-        'extractor_args': {'facebook': {'api': ['next']}},
-    }
+    print("\n===== API HIT =====")
 
     try:
+        data = request.json
+        print("DATA:", data)
+
+        url = data.get('url', '').strip()
+        print("URL:", url)
+
+        if not url:
+            return jsonify({'error': 'URL required'}), 400
+
+        ydl_opts = {
+            'quiet': False,
+            'no_warnings': False,
+            'skip_download': True,
+            'socket_timeout': 15,
+        }
+
+        if os.path.exists(COOKIES_PATH):
+            ydl_opts['cookiefile'] = COOKIES_PATH
+
+        print("Starting extraction...")
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            
-            formats = []
-            seen = set()
-            
-            for f in info.get('formats', []):
-                height = f.get('height')
-                ext = f.get('ext')
-                vcodec = f.get('vcodec', 'none')
-                
-                if height and vcodec != 'none' and ext in ['mp4', 'webm']:
-                    label = f"{height}p ({ext})"
-                    if label not in seen:
-                        seen.add(label)
-                        formats.append({
-                            'format_id': f['format_id'],
-                            'label': label,
-                            'height': height,
-                            'ext': ext,
-                            'filesize': f.get('filesize') or f.get('filesize_approx')
-                        })
 
-            formats.sort(key=lambda x: x['height'], reverse=True)
-            
-            formats.append({
-                'format_id': 'audio',
-                'label': 'MP3 (Audio Only)',
-                'height': 0,
-                'ext': 'mp3',
+        print("Extraction completed!")
+
+        # Fix 1: Formats update kar diye taaki Frontend par options aayen
+        formats = [
+            {
+                'format_id': 'bestvideo+bestaudio',
+                'label': 'Video + Audio (Best Quality)',
                 'filesize': None
-            })
+            },
+            {
+                'format_id': 'audio',
+                'label': 'Audio Only (MP3)',
+                'filesize': None
+            }
+        ]
 
-            return jsonify({
-                'title': info.get('title', 'Unknown'),
-                'thumbnail': info.get('thumbnail', ''),
-                'duration': info.get('duration', 0),
-                'uploader': info.get('uploader', 'Unknown'),
-                'view_count': info.get('view_count', 0),
-                'formats': formats
-            })
+        return jsonify({
+            'title': info.get('title', 'Unknown'),
+            'thumbnail': info.get('thumbnail', ''),
+            'duration': info.get('duration', 0),
+            'uploader': info.get('uploader', 'Unknown'),
+            'view_count': info.get('view_count', 0),
+            'formats': formats
+        })
 
     except Exception as e:
+        print("ERROR:", str(e))
         return jsonify({'error': str(e)}), 400
 
 
-@app.route('/api/download', methods=['POST'])
+# Fix 2: POST ko GET me badal diya taaki browser RAM crash na ho
+@app.route('/api/download', methods=['GET'])
 def download():
     """Download video/audio"""
-    data = request.json
-    url = data.get('url', '').strip()
-    format_id = data.get('format_id', 'bestvideo+bestaudio')
+    # GET request ke parameters read karne ke liye request.args ka use
+    url = request.args.get('url', '').strip()
+    format_id = request.args.get('format_id', 'bestvideo+bestaudio')
     is_audio = format_id == 'audio'
 
     if not url:
@@ -104,27 +100,29 @@ def download():
             'format': 'bestaudio/best',
             'outtmpl': output_path,
             'quiet': True,
-            'cookiefile': COOKIES_PATH,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
         }
+        if os.path.exists(COOKIES_PATH):
+            ydl_opts['cookiefile'] = COOKIES_PATH
     else:
         ydl_opts = {
-            'format': f'{format_id}+bestaudio/{format_id}/best',
+            'format': f'{format_id}/best' if format_id != 'bestvideo+bestaudio' else 'bestvideo+bestaudio/best',
             'outtmpl': output_path,
             'quiet': True,
-            'cookiefile': COOKIES_PATH,
             'merge_output_format': 'mp4',
         }
+        if os.path.exists(COOKIES_PATH):
+            ydl_opts['cookiefile'] = COOKIES_PATH
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
-            
+
             if is_audio:
                 base = os.path.splitext(filename)[0]
                 filename = base + '.mp3'
@@ -136,7 +134,8 @@ def download():
                         filename = os.path.join(DOWNLOAD_DIR, f)
                         break
 
-            cleanup_file(filename, delay=120)
+            # Fix 3: Delay badha kar 1 ghanta (3600 sec) kar diya
+            cleanup_file(filename, delay=3600)
 
             return send_file(
                 filename,
