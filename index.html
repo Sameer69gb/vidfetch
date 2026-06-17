@@ -244,7 +244,7 @@
   <div class="logo">VidFetch</div>
   <p>Download videos & audio from anywhere</p>
   <div class="supported">
-    <span class="chip">YouTube</span>
+    <span class="chip">Instagram/reel</span>
     <span class="chip">Twitter/X</span>
     <span class="chip">TikTok</span>
     <span class="chip">Reddit</span>
@@ -290,7 +290,7 @@
 <p class="note">For personal use only. Respect copyright laws and platform terms of service.</p>
 
 <script>
-  // Backend URL set kijiye
+  
   const API_BASE = 'https://vidfetch-z2wx.onrender.com/api';
   let selectedFormat = null;
   let currentUrl = '';
@@ -376,7 +376,7 @@
     hideStatus();
   }
 
-  // Updated startDownload function (GET method use karega RAM bachane ke liye)
+  
   function startDownload() {
     if (!selectedFormat) return;
     const btn = document.getElementById('downloadBtn');
