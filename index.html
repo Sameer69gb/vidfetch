@@ -244,7 +244,7 @@
   <div class="logo">VidFetch</div>
   <p>Download videos & audio from anywhere</p>
   <div class="supported">
-    <span class="chip">YouTube</span>
+    <span class="chip">Instagram/reel</span>
     <span class="chip">Twitter/X</span>
     <span class="chip">TikTok</span>
     <span class="chip">Reddit</span>
@@ -255,7 +255,7 @@
 <div class="card">
   <div class="input-row">
     <input type="text" id="urlInput" placeholder="Paste video URL here..." />
-    <button class="btn-fetch" id="fetchBtn" onclick="fetchInfo()">Fetch</button>
+    <button class="btn-fetch" id="fetchBtn" type="button" onclick="fetchInfo()">Fetch</button>
   </div>
 
   <div class="loader" id="loader">
@@ -290,6 +290,7 @@
 <p class="note">For personal use only. Respect copyright laws and platform terms of service.</p>
 
 <script>
+  
   const API_BASE = 'https://vidfetch-z2wx.onrender.com/api';
   let selectedFormat = null;
   let currentUrl = '';
@@ -375,38 +376,23 @@
     hideStatus();
   }
 
-  async function startDownload() {
+  
+  function startDownload() {
     if (!selectedFormat) return;
     const btn = document.getElementById('downloadBtn');
     btn.disabled = true;
-    btn.textContent = '⏳ Downloading...';
-    showStatus('Download started! This may take a moment...', 'info');
-    try {
-      const res = await fetch(`${API_BASE}/download`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: currentUrl, format_id: selectedFormat })
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error);
-      }
-      const blob = await res.blob();
-      const disposition = res.headers.get('Content-Disposition') || '';
-      const match = disposition.match(/filename="?([^"]+)"?/);
-      const filename = match ? match[1] : 'video.mp4';
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      showStatus('✓ Download complete!', 'success');
-    } catch (err) {
-      showStatus('Error: ' + err.message, 'error');
-    } finally {
+    btn.textContent = '⏳ Starting Download...';
+    showStatus('Download is starting in your browser...', 'info');
+
+    const downloadUrl = `${API_BASE}/download?url=${encodeURIComponent(currentUrl)}&format_id=${encodeURIComponent(selectedFormat)}`;
+    
+    window.location.href = downloadUrl;
+
+    setTimeout(() => {
       btn.disabled = false;
       btn.innerHTML = '⬇ Download';
-    }
+      hideStatus();
+    }, 3000);
   }
 
   document.getElementById('urlInput').addEventListener('keydown', e => {
