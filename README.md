@@ -2,7 +2,7 @@
 
 ### 🏠 Home Page
 
-![Home](Home.png)
+![Home](home.png)
 
 ### 🎬 Video Information
 
