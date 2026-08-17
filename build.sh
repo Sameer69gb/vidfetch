@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
-# Exit on error
 set -o errexit
 
-# Python requirements install karo
+# Python requirements install 
 pip install -r requirements.txt
 
-# FFmpeg download aur setup karo (Kyunki Render mein root access nahi hota)
+# FFmpeg download aur setup
 echo "Downloading FFmpeg..."
-wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-tar -xf ffmpeg-release-amd64-static.tar.xz
+
+wget -O ffmpeg.tar.xz \
+  https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-linux64-gpl.tar.xz
+
+tar -xf ffmpeg.tar.xz
+
 mkdir -p bin
-cp ffmpeg-*-amd64-static/ffmpeg bin/
-cp ffmpeg-*-amd64-static/ffprobe bin/
-rm -rf ffmpeg-*-amd64-static*
+
+cp ffmpeg-master-latest-linux64-gpl/bin/ffmpeg bin/
+cp ffmpeg-master-latest-linux64-gpl/bin/ffprobe bin/
+
+rm -rf ffmpeg-master-latest-linux64-gpl ffmpeg.tar.xz
+
 echo "FFmpeg installed successfully!"
