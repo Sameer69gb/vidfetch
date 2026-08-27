@@ -1,4 +1,4 @@
 flask
 flask-cors
-yt-dlp==2026.07.04
+yt-dlp==2026.08.19
 gunicorn
