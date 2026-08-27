@@ -40,7 +40,7 @@ def get_info():
             'quiet': False,
             'no_warnings': False,
             'skip_download': True,
-            'socket_timeout': 15,
+            'socket_timeout': 30,
         }
 
         if os.path.exists(COOKIES_PATH):
@@ -53,7 +53,6 @@ def get_info():
 
         print("Extraction completed!")
 
-        # Fix 1: Formats update kar diye taaki Frontend par options aayen
         formats = [
             {
                 'format_id': 'bestvideo+bestaudio',
@@ -81,11 +80,11 @@ def get_info():
         return jsonify({'error': str(e)}), 400
 
 
-# Fix 2: POST ko GET me badal diya taaki browser RAM crash na ho
+
 @app.route('/api/download', methods=['GET'])
 def download():
     """Download video/audio"""
-    # GET request ke parameters read karne ke liye request.args ka use
+    
     url = request.args.get('url', '').strip()
     format_id = request.args.get('format_id', 'bestvideo+bestaudio')
     is_audio = format_id == 'audio'
@@ -136,7 +135,6 @@ def download():
                         filename = os.path.join(DOWNLOAD_DIR, f)
                         break
 
-            # Fix 3: Delay badha kar 1 ghanta (3600 sec) kar diya
             cleanup_file(filename, delay=3600)
 
             return send_file(
